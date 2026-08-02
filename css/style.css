@@ -32,11 +32,11 @@ header.top{
   border-bottom: 2px solid var(--line);
   display:flex; align-items:center; gap:16px; flex-wrap:wrap;
 }
-header.top img.logo{ width:52px; height:52px; border-radius:50%; object-fit:cover; border: 2px solid var(--wood-dim); flex-shrink:0; }
+header.top img.logo{ width:76px; height:76px; border-radius:50%; object-fit:cover; border: 2px solid var(--wood-dim); flex-shrink:0; }
 header.top .brand{
   font-family:'Oswald', sans-serif;
   font-weight:700;
-  font-size: 26px;
+  font-size: 30px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   color: var(--text);
