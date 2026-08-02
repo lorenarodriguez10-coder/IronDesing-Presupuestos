@@ -29,6 +29,7 @@ let state = {
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function money(n){ return '$' + (Math.round((n||0)*100)/100).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function moneyRedondo(n){ return '$' + Math.round(n||0).toLocaleString('es-AR', {maximumFractionDigits:0}); }
 function escapeHtml(s){ const d=document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
 function fechaHoy(){ return new Date().toISOString().slice(0,10); }
 function fechaLegible(iso){
