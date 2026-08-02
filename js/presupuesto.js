@@ -37,7 +37,7 @@ function renderPresupuesto(){
           <input id="cli-direccion" value="${p && p.cliente ? escapeHtml(p.cliente.direccion||'') : ''}" placeholder="Ej: Av. Siempreviva 742">
         </div>
         <div class="field">
-          <label>Email (opcional)</label>
+          <label>Email</label>
           <input id="cli-email" value="${p && p.cliente ? escapeHtml(p.cliente.email||'') : ''}" placeholder="Ej: juan@mail.com">
         </div>
       </div>
