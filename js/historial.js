@@ -3,6 +3,11 @@ const ESTADOS = {
   aceptado: { label: 'Aceptado', clase: 'estado-aceptado' },
   cancelado: { label: 'Cancelado', clase: 'estado-cancelado' },
 };
+const ORIGENES = {
+  presupuestador: 'Presupuestador',
+  mercadolibre: 'Mercado Libre',
+  otro: 'Otro',
+};
 
 function presupuestosFiltrados(){
   const f = state.historialFiltros;
@@ -62,6 +67,52 @@ function renderHistorial(){
 
   return `
     <div class="panel">
+      <div class="row" style="align-items:center;">
+        <h2 style="border:none; margin:0; padding:0; flex:1;">Ventas y presupuestos</h2>
+        <button class="ghost action" onclick="toggleCargaVentaAntigua()">${state.cargandoVentaAntigua ? 'Cancelar' : '+ Cargar venta antigua'}</button>
+      </div>
+      ${state.cargandoVentaAntigua ? `
+        <div class="hint" style="margin-top:10px;">Para registrar una venta que no pasó por el presupuestador (ej. Mercado Libre) o un presupuesto viejo que ya tenías en papel.</div>
+        <div class="row" style="margin-top:14px;">
+          <div class="field">
+            <label>Fecha</label>
+            <input id="va-fecha" type="date" value="${fechaHoy()}">
+          </div>
+          <div class="field" style="flex:2 1 220px;">
+            <label>Nombre / descripción</label>
+            <input id="va-nombre" placeholder="Ej: Mesa ratona vendida por ML">
+          </div>
+          <div class="field">
+            <label>Origen</label>
+            <select id="va-origen">
+              <option value="mercadolibre">Mercado Libre</option>
+              <option value="presupuestador">Presupuestador</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" style="margin-top:12px;">
+          <div class="field">
+            <label>Cliente (opcional)</label>
+            <input id="va-cliente" placeholder="Nombre del comprador">
+          </div>
+          <div class="field" style="flex:0 0 180px;">
+            <label>Monto total</label>
+            <input id="va-monto" type="number" step="0.01" placeholder="0.00">
+          </div>
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label>Observaciones (opcional)</label>
+          <textarea id="va-observaciones" placeholder="Detalles de la venta, condiciones, lo que sea útil recordar..."></textarea>
+        </div>
+        <div class="row" style="margin-top:14px;">
+          <div class="field" style="flex:0 0 auto;">
+            <button class="action" onclick="guardarVentaAntigua()">Guardar venta</button>
+          </div>
+        </div>
+      ` : ''}
+    </div>
+    <div class="panel">
       <h2>Buscar y filtrar</h2>
       <div class="row">
         <div class="field" style="flex:2 1 220px;">
@@ -91,10 +142,11 @@ function renderHistorial(){
         filtrados.length === 0 ? '<div class="empty">Ningún presupuesto coincide con esos filtros.</div>' :
         filtrados.map(p => {
         const estado = ESTADOS[p.estado || 'pendiente'];
+        const origenLabel = p.origen && p.origen !== 'presupuestador' ? ORIGENES[p.origen] : null;
         return `
         <div class="hist-item" onclick="verHistorial('${p.id}')">
           <div>
-            <div class="nombre">${escapeHtml(p.nombre)} ${p.numero ? `<span class="numero">Nº ${formatearNumero(p.numero)}</span>` : ''} <span class="estado-badge ${estado.clase}">${estado.label}</span></div>
+            <div class="nombre">${escapeHtml(p.nombre)} ${p.numero ? `<span class="numero">Nº ${formatearNumero(p.numero)}</span>` : ''} <span class="estado-badge ${estado.clase}">${estado.label}</span> ${origenLabel ? `<span class="calc-badge">${origenLabel}</span>` : ''}</div>
             <div class="fecha">${p.cliente && p.cliente.nombre ? escapeHtml(p.cliente.nombre) + ' · ' : ''}${fechaLegible(p.fecha || p.fechaGuardado)}</div>
           </div>
           <div style="display:flex; align-items:center; gap:14px;">
@@ -105,6 +157,51 @@ function renderHistorial(){
       `;}).join('')}
     </div>
   `;
+}
+
+function toggleCargaVentaAntigua(){
+  state.cargandoVentaAntigua = !state.cargandoVentaAntigua;
+  render();
+}
+async function guardarVentaAntigua(){
+  const fecha = document.getElementById('va-fecha').value;
+  const nombre = document.getElementById('va-nombre').value.trim();
+  const origen = document.getElementById('va-origen').value;
+  const clienteNombre = document.getElementById('va-cliente').value.trim();
+  const monto = parseFloat(document.getElementById('va-monto').value);
+  const observaciones = document.getElementById('va-observaciones').value.trim();
+
+  if(!fecha){ showToast('Elegí una fecha'); return; }
+  if(!nombre){ showToast('Cargá un nombre o descripción'); return; }
+  if(isNaN(monto) || monto <= 0){ showToast('Cargá un monto válido'); return; }
+
+  const numero = await obtenerProximoNumero();
+  const registro = {
+    id: uid(),
+    numero,
+    nombre,
+    fecha,
+    fechaGuardado: new Date().toISOString(),
+    cliente: { nombre: clienteNombre, telefono:'', direccion:'', email:'' },
+    medidas: { largo:'', ancho:'', alto:'' },
+    items: [],
+    extrasNetos: [],
+    manoObraPct: 0,
+    impuestosPct: 0,
+    subtotalMateriales: monto,
+    manoObra: 0,
+    impuestos: 0,
+    total: monto,
+    estado: 'aceptado', // una venta ya realizada se considera aceptada de entrada
+    origen,
+    tiempoFabricacion: '',
+    observaciones,
+  };
+  state.presupuestos.unshift(registro);
+  await storageSet(KEYS.presupuestos, state.presupuestos);
+  showToast('Venta cargada');
+  state.cargandoVentaAntigua = false;
+  render();
 }
 
 function updateFiltroTexto(value){
