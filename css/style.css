@@ -239,3 +239,9 @@ td input{ width: 90px; padding: 6px 8px; font-size:13px; }
 }
 .confirm-box p{ margin: 0 0 16px; font-size: 14px; }
 .confirm-actions{ display:flex; gap:10px; justify-content:center; }
+
+.stat-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 14px; margin-top: 4px; }
+.stat-card{ background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+.stat-label{ font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 8px; }
+.stat-value{ font-family:'IBM Plex Mono', monospace; font-size: 26px; color: var(--wood); font-weight: 600; }
+.stat-value-text{ font-family:'Oswald', sans-serif; font-size: 17px; text-transform: none; letter-spacing: 0; }
