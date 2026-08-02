@@ -13,6 +13,7 @@ const ORIGENES = {
 function presupuestosFiltrados(){
   const f = state.historialFiltros;
   return state.presupuestos.filter(p => {
+    if(f.soloDeuda && !(p.pagado === false && (p.montoAdeudado||0) > 0)) return false;
     if(f.estado !== 'todos' && (p.estado||'pendiente') !== f.estado) return false;
 
     if(f.texto){
@@ -120,7 +121,8 @@ function renderHistorial(){
 
   const f = state.historialFiltros;
   const filtrados = presupuestosFiltrados();
-  const hayFiltrosActivos = f.texto || f.estado !== 'todos' || f.fechaDesde || f.fechaHasta;
+  const hayFiltrosActivos = f.texto || f.estado !== 'todos' || f.fechaDesde || f.fechaHasta || f.soloDeuda;
+  const totalAdeudadoGlobal = state.presupuestos.filter(p => p.pagado === false).reduce((s,p)=> s + (p.montoAdeudado||0), 0);
 
   return `
     <div class="panel">
@@ -206,6 +208,8 @@ function renderHistorial(){
         <button class="small ${f.estado==='pendiente'?'action':'ghost'}" onclick="updateFiltroEstado('pendiente')">Pendiente</button>
         <button class="small ${f.estado==='aceptado'?'action':'ghost'}" onclick="updateFiltroEstado('aceptado')">Aceptado</button>
         <button class="small ${f.estado==='cancelado'?'action':'ghost'}" onclick="updateFiltroEstado('cancelado')">Cancelado</button>
+        <div style="flex:1;"></div>
+        <button class="small ${f.soloDeuda?'danger':'ghost'}" onclick="toggleFiltroDeuda()">💰 Deben plata${totalAdeudadoGlobal>0 ? ' ('+moneyRedondo(totalAdeudadoGlobal)+')' : ''}</button>
       </div>
     </div>
     <div class="panel">
@@ -339,7 +343,12 @@ function updateFiltroTexto(value){
 }
 function updateFiltroFecha(campo, value){ state.historialFiltros[campo] = value; render(); }
 function updateFiltroEstado(estado){ state.historialFiltros.estado = estado; render(); }
-function limpiarFiltrosHistorial(){ state.historialFiltros = { texto:'', estado:'todos', fechaDesde:'', fechaHasta:'' }; render(); }
+function limpiarFiltrosHistorial(){ state.historialFiltros = { texto:'', estado:'todos', fechaDesde:'', fechaHasta:'', soloDeuda:false }; render(); }
+function toggleFiltroDeuda(){ state.historialFiltros.soloDeuda = !state.historialFiltros.soloDeuda; render(); }
+function verDeudores(){
+  state.historialFiltros = { texto:'', estado:'todos', fechaDesde:'', fechaHasta:'', soloDeuda:true };
+  setTab('historial');
+}
 
 function verHistorial(id){
   const registro = state.presupuestos.find(x=>x.id===id);
