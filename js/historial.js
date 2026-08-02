@@ -48,6 +48,7 @@ function renderHistorial(){
       return `
         <div class="panel">
           <button class="ghost action" onclick="volverHistorial()">← Volver al historial</button>
+          ${p.plantillaId ? `<button class="ghost action" onclick="duplicarPresupuesto('${p.id}')">Duplicar este presupuesto</button>` : ''}
         </div>
         <div class="panel">
           <h2>Estado del presupuesto</h2>
@@ -226,8 +227,9 @@ function renderHistorial(){
             <div class="nombre">${escapeHtml(p.nombre)} ${p.numero ? `<span class="numero">Nº ${formatearNumero(p.numero)}</span>` : ''} <span class="estado-badge ${estado.clase}">${estado.label}</span> ${origenLabel ? `<span class="calc-badge">${origenLabel}</span>` : ''} ${tieneDeuda ? `<span class="estado-badge estado-cancelado">Debe ${money(p.montoAdeudado)}</span>` : ''}</div>
             <div class="fecha">${p.cliente && p.cliente.nombre ? escapeHtml(p.cliente.nombre) + ' · ' : ''}${fechaLegible(p.fecha || p.fechaGuardado)}</div>
           </div>
-          <div style="display:flex; align-items:center; gap:14px;">
+          <div style="display:flex; align-items:center; gap:10px;">
             <div class="total">${money(p.total)}</div>
+            ${p.plantillaId ? `<button class="ghost small" onclick="event.stopPropagation(); duplicarPresupuesto('${p.id}')">Duplicar</button>` : ''}
             <button class="danger small" onclick="event.stopPropagation(); deletePresupuesto('${p.id}')">✕</button>
           </div>
         </div>
@@ -371,6 +373,30 @@ async function cambiarEstado(id, nuevoEstado){
   showToast(`Marcado como ${ESTADOS[nuevoEstado].label}`);
   render();
 }
+function duplicarPresupuesto(id){
+  const original = state.presupuestos.find(x=>x.id===id);
+  if(!original) return;
+  const copia = JSON.parse(JSON.stringify(original));
+  delete copia.id;
+  copia.numero = null; // se asigna uno nuevo al guardar, no pisa el original
+  copia.estado = 'pendiente';
+  copia.fecha = fechaHoy();
+  delete copia.fechaGuardado;
+  copia.pagado = true;
+  copia.montoAdeudado = 0;
+
+  state.presupuestoActual = copia;
+  if(copia.plantillaId){
+    const plantilla = state.plantillas.find(pl=>pl.id===copia.plantillaId);
+    state.presupuestoItemsEdit = plantilla ? JSON.parse(JSON.stringify(plantilla.items)) : [];
+  } else {
+    state.presupuestoItemsEdit = [];
+  }
+  state.viewingHistorial = null;
+  setTab('presupuesto');
+  showToast('Duplicado — ajustá lo que cambió y volvé a calcular');
+}
+
 function deletePresupuesto(id){
   showConfirm('¿Eliminar este presupuesto del historial?', async ()=>{
     state.presupuestos = state.presupuestos.filter(p=>p.id!==id);
