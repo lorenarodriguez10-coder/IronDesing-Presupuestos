@@ -122,7 +122,11 @@ function generarPDF(){
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.text(p.nombre, marginX, y);
-  y += 7;
+  y += 6;
+  y = dibujarMedidas(doc, p, marginX, y);
+  y += 1;
+
+  const filas = p.items.map(it => [
 
   const filas = p.items.map(it => [
     it.nombre.replace('⚠ MATERIAL BORRADO — revisá esta plantilla', 'Material (revisar)'),
@@ -195,7 +199,9 @@ function generarPDF(){
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.text(p.nombre, marginX, y);
-  y += 10;
+  y += 6;
+  y = dibujarMedidas(doc, p, marginX, y);
+  y += 4;
 
   doc.autoTable({
     startY: y,
