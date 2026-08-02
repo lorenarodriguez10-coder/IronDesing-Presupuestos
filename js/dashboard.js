@@ -45,7 +45,9 @@ function renderDashboard(){
 
   // Actividad del mes SELECCIONADO (puede ser distinto al actual)
   const presupuestosMesSel = state.presupuestos.filter(p => claveMes(p.fecha || p.fechaGuardado) === claveSeleccionada);
+  const totalMesSel = presupuestosMesSel.reduce((s,p)=> s + (p.total||0), 0);
   const cobradoMesSel = presupuestosMesSel.reduce((s,p)=> s + montoCobrado(p), 0);
+  const adeudadoMesSel = presupuestosMesSel.filter(p=>p.pagado===false).reduce((s,p)=> s + (p.montoAdeudado||0), 0);
 
   // Material más utilizado
   const materialCount = {};
@@ -93,6 +95,10 @@ function renderDashboard(){
           <div class="stat-label">Pendientes de respuesta</div>
           <div class="stat-value">${pendientes.length}</div>
         </div>
+        <div class="stat-card">
+          <div class="stat-label">Total de trabajos (histórico)</div>
+          <div class="stat-value">${totalTrabajos}</div>
+        </div>
         ${totalAdeudado > 0 ? `
         <div class="stat-card" style="cursor:pointer;" onclick="verDeudores()">
           <div class="stat-label">Total adeudado (por cobrar) <span class="hint" style="display:inline;">→ ver quién debe</span></div>
@@ -116,12 +122,16 @@ function renderDashboard(){
           <div class="stat-value">${presupuestosMesSel.length}</div>
         </div>
         <div class="stat-card">
+          <div class="stat-label">Monto total — ${nombreMesClave(claveSeleccionada)}</div>
+          <div class="stat-value">${moneyRedondo(totalMesSel)}</div>
+        </div>
+        <div class="stat-card">
           <div class="stat-label">Monto cobrado — ${nombreMesClave(claveSeleccionada)}</div>
           <div class="stat-value">${moneyRedondo(cobradoMesSel)}</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Total de trabajos (histórico)</div>
-          <div class="stat-value">${totalTrabajos}</div>
+          <div class="stat-label">Monto adeudado — ${nombreMesClave(claveSeleccionada)}</div>
+          <div class="stat-value" style="color: var(--danger);">${moneyRedondo(adeudadoMesSel)}</div>
         </div>
       </div>
     </div>
