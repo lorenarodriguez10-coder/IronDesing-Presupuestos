@@ -294,7 +294,8 @@ function renderTicket(p){
 
       <div class="row" style="margin-top:18px;">
         <button class="action" onclick="guardarPresupuesto(${subtotalMateriales}, ${manoObra}, ${impuestos}, ${total})">${p.numero ? 'Guardar cambios' : 'Guardar presupuesto'}</button>
-        <button class="ghost action" onclick="generarPDF()">Generar PDF</button>
+        <button class="ghost action" onclick="generarPDFInterno()">PDF interno</button>
+        <button class="ghost action" onclick="generarPDFCliente()">PDF cliente</button>
       </div>
     </div>
   `;
@@ -324,7 +325,7 @@ async function guardarPresupuesto(subtotalMateriales, manoObra, impuestos, total
     state.presupuestoActual.numero = numero;
   }
   const estado = p.estado || 'pendiente';
-  const registro = { id: uid(), fechaGuardado: new Date().toISOString(), ...state.presupuestoActual, numero, subtotalMateriales, manoObra, impuestos, total, estado };
+  const registro = { id: uid(), fechaGuardado: new Date().toISOString(), ...state.presupuestoActual, numero, subtotalMateriales, manoObra, impuestos, total, estado, origen: state.presupuestoActual.origen || 'presupuestador' };
   // si ya existía (se está re-guardando un editado), reemplazar; si no, agregar
   const idxExistente = state.presupuestos.findIndex(x => x.numero === numero);
   if(idxExistente > -1) state.presupuestos[idxExistente] = registro;
