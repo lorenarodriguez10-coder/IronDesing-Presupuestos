@@ -39,7 +39,10 @@ function renderHistorial(){
             <div class="nombre">${escapeHtml(p.nombre)} ${p.numero ? `<span class="numero">Nº ${formatearNumero(p.numero)}</span>` : ''} <span class="estado-badge ${estado.clase}">${estado.label}</span></div>
             <div class="fecha">${p.cliente && p.cliente.nombre ? escapeHtml(p.cliente.nombre) + ' · ' : ''}${fechaLegible(p.fecha || p.fechaGuardado)}</div>
           </div>
-          <div class="total">${money(p.total)}</div>
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div class="total">${money(p.total)}</div>
+            <button class="danger small" onclick="event.stopPropagation(); deletePresupuesto('${p.id}')">✕</button>
+          </div>
         </div>
       `;}).join('')}
     </div>
@@ -65,4 +68,12 @@ async function cambiarEstado(id, nuevoEstado){
   await storageSet(KEYS.presupuestos, state.presupuestos);
   showToast(`Marcado como ${ESTADOS[nuevoEstado].label}`);
   render();
+}
+function deletePresupuesto(id){
+  showConfirm('¿Eliminar este presupuesto del historial?', async ()=>{
+    state.presupuestos = state.presupuestos.filter(p=>p.id!==id);
+    await storageSet(KEYS.presupuestos, state.presupuestos);
+    showToast('Presupuesto eliminado');
+    render();
+  });
 }
