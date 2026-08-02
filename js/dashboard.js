@@ -16,6 +16,13 @@ function mesesDisponibles(){
 }
 function updateDashboardMes(valor){ state.dashboardMesSeleccionado = valor; render(); }
 
+// Lo que realmente entró en caja de este presupuesto: si está marcado como no pagado del todo,
+// se descuenta lo adeudado. Si no tiene el campo "pagado" (presupuestos normales), se cuenta entero.
+function montoCobrado(p){
+  if(p.pagado === false) return Math.max(0, (p.total||0) - (p.montoAdeudado||0));
+  return p.total || 0;
+}
+
 function renderDashboard(){
   if(state.presupuestos.length === 0){
     return `<div class="panel"><div class="empty">Todavía no hay presupuestos guardados. Las estadísticas van a aparecer acá a medida que guardes trabajos.</div></div>`;
@@ -26,20 +33,19 @@ function renderDashboard(){
   const claveSeleccionada = state.dashboardMesSeleccionado || claveActual;
 
   const presupuestosMesActual = state.presupuestos.filter(p => claveMes(p.fecha || p.fechaGuardado) === claveActual);
-  const aceptados = state.presupuestos.filter(p => (p.estado||'pendiente') === 'aceptado' && p.pagado !== false);
-  const aceptadosMesActual = presupuestosMesActual.filter(p => (p.estado||'pendiente') === 'aceptado' && p.pagado !== false);
+  const aceptados = state.presupuestos.filter(p => (p.estado||'pendiente') === 'aceptado');
+  const aceptadosMesActual = presupuestosMesActual.filter(p => (p.estado||'pendiente') === 'aceptado');
   const pendientes = state.presupuestos.filter(p => (p.estado||'pendiente') === 'pendiente');
   const totalAdeudado = state.presupuestos.filter(p => p.pagado === false).reduce((s,p)=> s + (p.montoAdeudado||0), 0);
 
   const totalTrabajos = state.presupuestos.length;
-  const facturacionTotal = aceptados.reduce((s,p)=> s + (p.total||0), 0);
-  const facturacionMesActual = aceptadosMesActual.reduce((s,p)=> s + (p.total||0), 0);
+  const facturacionTotal = aceptados.reduce((s,p)=> s + montoCobrado(p), 0);
+  const facturacionMesActual = aceptadosMesActual.reduce((s,p)=> s + montoCobrado(p), 0);
   const tasaConversion = totalTrabajos > 0 ? Math.round((aceptados.length / totalTrabajos) * 100) : 0;
 
   // Actividad del mes SELECCIONADO (puede ser distinto al actual)
   const presupuestosMesSel = state.presupuestos.filter(p => claveMes(p.fecha || p.fechaGuardado) === claveSeleccionada);
-  const presupuestadoMesSel = presupuestosMesSel.filter(p => p.pagado !== false).reduce((s,p)=> s + (p.total||0), 0);
-  const presupuestadoTotal = state.presupuestos.filter(p => p.pagado !== false).reduce((s,p)=> s + (p.total||0), 0);
+  const cobradoMesSel = presupuestosMesSel.reduce((s,p)=> s + montoCobrado(p), 0);
 
   // Material más utilizado
   const materialCount = {};
@@ -68,7 +74,7 @@ function renderDashboard(){
 
   return `
     <div class="panel">
-      <h2>Facturación real (solo presupuestos Aceptados) — mes actual</h2>
+      <h2>Facturación real (solo presupuestos Aceptados, y solo lo ya cobrado) — mes actual</h2>
       <div class="stat-grid">
         <div class="stat-card">
           <div class="stat-label">Facturación este mes</div>
@@ -88,8 +94,8 @@ function renderDashboard(){
           <div class="stat-value">${pendientes.length}</div>
         </div>
         ${totalAdeudado > 0 ? `
-        <div class="stat-card">
-          <div class="stat-label">Total adeudado (por cobrar)</div>
+        <div class="stat-card" style="cursor:pointer;" onclick="verDeudores()">
+          <div class="stat-label">Total adeudado (por cobrar) <span class="hint" style="display:inline;">→ ver quién debe</span></div>
           <div class="stat-value" style="color: var(--danger);">${moneyRedondo(totalAdeudado)}</div>
         </div>
         ` : ''}
@@ -110,16 +116,12 @@ function renderDashboard(){
           <div class="stat-value">${presupuestosMesSel.length}</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Monto — ${nombreMesClave(claveSeleccionada)}</div>
-          <div class="stat-value">${moneyRedondo(presupuestadoMesSel)}</div>
+          <div class="stat-label">Monto cobrado — ${nombreMesClave(claveSeleccionada)}</div>
+          <div class="stat-value">${moneyRedondo(cobradoMesSel)}</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Total de trabajos (histórico)</div>
           <div class="stat-value">${totalTrabajos}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Monto presupuestado histórico</div>
-          <div class="stat-value">${moneyRedondo(presupuestadoTotal)}</div>
         </div>
       </div>
     </div>
