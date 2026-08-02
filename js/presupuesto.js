@@ -323,7 +323,8 @@ async function guardarPresupuesto(subtotalMateriales, manoObra, impuestos, total
     numero = await obtenerProximoNumero();
     state.presupuestoActual.numero = numero;
   }
-  const registro = { id: uid(), fechaGuardado: new Date().toISOString(), ...state.presupuestoActual, numero, subtotalMateriales, manoObra, impuestos, total };
+  const estado = p.estado || 'pendiente';
+  const registro = { id: uid(), fechaGuardado: new Date().toISOString(), ...state.presupuestoActual, numero, subtotalMateriales, manoObra, impuestos, total, estado };
   // si ya existía (se está re-guardando un editado), reemplazar; si no, agregar
   const idxExistente = state.presupuestos.findIndex(x => x.numero === numero);
   if(idxExistente > -1) state.presupuestos[idxExistente] = registro;
