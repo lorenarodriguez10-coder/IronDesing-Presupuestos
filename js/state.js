@@ -11,6 +11,8 @@ const CALCULOS = [
 
 let state = {
   tab: 'dashboard',
+  dashboardMesSeleccionado: null, // null = mes actual
+  cargandoVentaAntigua: false,
   materiales: [],
   plantillas: [],
   presupuestos: [],
