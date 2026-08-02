@@ -26,9 +26,10 @@ function renderDashboard(){
   const claveSeleccionada = state.dashboardMesSeleccionado || claveActual;
 
   const presupuestosMesActual = state.presupuestos.filter(p => claveMes(p.fecha || p.fechaGuardado) === claveActual);
-  const aceptados = state.presupuestos.filter(p => (p.estado||'pendiente') === 'aceptado');
-  const aceptadosMesActual = presupuestosMesActual.filter(p => (p.estado||'pendiente') === 'aceptado');
+  const aceptados = state.presupuestos.filter(p => (p.estado||'pendiente') === 'aceptado' && p.pagado !== false);
+  const aceptadosMesActual = presupuestosMesActual.filter(p => (p.estado||'pendiente') === 'aceptado' && p.pagado !== false);
   const pendientes = state.presupuestos.filter(p => (p.estado||'pendiente') === 'pendiente');
+  const totalAdeudado = state.presupuestos.filter(p => p.pagado === false).reduce((s,p)=> s + (p.montoAdeudado||0), 0);
 
   const totalTrabajos = state.presupuestos.length;
   const facturacionTotal = aceptados.reduce((s,p)=> s + (p.total||0), 0);
@@ -37,8 +38,8 @@ function renderDashboard(){
 
   // Actividad del mes SELECCIONADO (puede ser distinto al actual)
   const presupuestosMesSel = state.presupuestos.filter(p => claveMes(p.fecha || p.fechaGuardado) === claveSeleccionada);
-  const presupuestadoMesSel = presupuestosMesSel.reduce((s,p)=> s + (p.total||0), 0);
-  const presupuestadoTotal = state.presupuestos.reduce((s,p)=> s + (p.total||0), 0);
+  const presupuestadoMesSel = presupuestosMesSel.filter(p => p.pagado !== false).reduce((s,p)=> s + (p.total||0), 0);
+  const presupuestadoTotal = state.presupuestos.filter(p => p.pagado !== false).reduce((s,p)=> s + (p.total||0), 0);
 
   // Material más utilizado
   const materialCount = {};
@@ -86,6 +87,12 @@ function renderDashboard(){
           <div class="stat-label">Pendientes de respuesta</div>
           <div class="stat-value">${pendientes.length}</div>
         </div>
+        ${totalAdeudado > 0 ? `
+        <div class="stat-card">
+          <div class="stat-label">Total adeudado (por cobrar)</div>
+          <div class="stat-value" style="color: var(--danger);">${moneyRedondo(totalAdeudado)}</div>
+        </div>
+        ` : ''}
       </div>
     </div>
     <div class="panel">
