@@ -21,6 +21,7 @@ let state = {
   presupuestoActual: null,
   presupuestoItemsEdit: [], // copia editable (solo para este presupuesto) de los factores de la plantilla elegida
   presupuestoDraft: { nombre:'', cliente:{nombre:'',telefono:'',direccion:'',email:''}, tiempoFabricacion:'', observaciones:'' },
+  historialFiltros: { texto:'', estado:'todos', fechaDesde:'', fechaHasta:'' },
   viewingHistorial: null,
 };
 
