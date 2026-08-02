@@ -1,5 +1,6 @@
 function renderPresupuesto(){
   const p = state.presupuestoActual;
+  const d = p || state.presupuestoDraft; // si no hay cálculo todavía, usamos lo que el usuario ya tipeó
   const plantillaId = p ? p.plantillaId : (document.getElementById('pr-plantilla') ? document.getElementById('pr-plantilla').value : '');
   return `
     <div class="panel">
@@ -7,7 +8,7 @@ function renderPresupuesto(){
       <div class="cols2">
         <div class="field">
           <label>Nombre del proyecto</label>
-          <input id="pr-nombre" value="${p ? escapeHtml(p.nombre) : ''}" placeholder="Ej: Recibidor doble">
+          <input id="pr-nombre" value="${escapeHtml(d.nombre||'')}" placeholder="Ej: Recibidor doble">
         </div>
         <div class="field">
           <label>Plantilla</label>
@@ -24,21 +25,21 @@ function renderPresupuesto(){
       <div class="cols2">
         <div class="field">
           <label>Nombre y apellido</label>
-          <input id="cli-nombre" value="${p && p.cliente ? escapeHtml(p.cliente.nombre||'') : ''}" placeholder="Ej: Juan Pérez">
+          <input id="cli-nombre" value="${escapeHtml((d.cliente&&d.cliente.nombre)||'')}" placeholder="Ej: Juan Pérez">
         </div>
         <div class="field">
           <label>Teléfono</label>
-          <input id="cli-telefono" value="${p && p.cliente ? escapeHtml(p.cliente.telefono||'') : ''}" placeholder="Ej: 11 2345-6789">
+          <input id="cli-telefono" value="${escapeHtml((d.cliente&&d.cliente.telefono)||'')}" placeholder="Ej: 11 2345-6789">
         </div>
       </div>
       <div class="cols2" style="margin-top:12px;">
         <div class="field">
           <label>Dirección</label>
-          <input id="cli-direccion" value="${p && p.cliente ? escapeHtml(p.cliente.direccion||'') : ''}" placeholder="Ej: Av. Siempreviva 742">
+          <input id="cli-direccion" value="${escapeHtml((d.cliente&&d.cliente.direccion)||'')}" placeholder="Ej: Av. Siempreviva 742">
         </div>
         <div class="field">
           <label>Email</label>
-          <input id="cli-email" value="${p && p.cliente ? escapeHtml(p.cliente.email||'') : ''}" placeholder="Ej: juan@mail.com">
+          <input id="cli-email" value="${escapeHtml((d.cliente&&d.cliente.email)||'')}" placeholder="Ej: juan@mail.com">
         </div>
       </div>
     </div>
@@ -59,11 +60,11 @@ function renderPresupuesto(){
       <h2>Detalles adicionales</h2>
       <div class="field">
         <label>Tiempo estimado de fabricación</label>
-        <input id="pr-tiempo" value="${p ? escapeHtml(p.tiempoFabricacion||'') : ''}" placeholder="Ej: 10 días hábiles">
+        <input id="pr-tiempo" value="${escapeHtml(d.tiempoFabricacion||'')}" placeholder="Ej: 10 días hábiles">
       </div>
       <div class="field" style="margin-top:12px;">
         <label>Observaciones</label>
-        <textarea id="pr-observaciones" placeholder="Notas para el cliente (opcional)">${p ? escapeHtml(p.observaciones||'') : ''}</textarea>
+        <textarea id="pr-observaciones" placeholder="Notas para el cliente (opcional)">${escapeHtml(d.observaciones||'')}</textarea>
       </div>
       <div class="row" style="margin-top:14px;">
         <button class="action" onclick="calcularPresupuesto()">Calcular presupuesto</button>
@@ -92,6 +93,19 @@ function renderItemsEditables(){
 }
 
 function onPlantillaChange(){
+  // Guardamos lo que el usuario ya escribió, para no perderlo al refrescar la pantalla
+  state.presupuestoDraft = {
+    nombre: document.getElementById('pr-nombre') ? document.getElementById('pr-nombre').value : state.presupuestoDraft.nombre,
+    cliente: {
+      nombre: document.getElementById('cli-nombre') ? document.getElementById('cli-nombre').value : state.presupuestoDraft.cliente.nombre,
+      telefono: document.getElementById('cli-telefono') ? document.getElementById('cli-telefono').value : state.presupuestoDraft.cliente.telefono,
+      direccion: document.getElementById('cli-direccion') ? document.getElementById('cli-direccion').value : state.presupuestoDraft.cliente.direccion,
+      email: document.getElementById('cli-email') ? document.getElementById('cli-email').value : state.presupuestoDraft.cliente.email,
+    },
+    tiempoFabricacion: document.getElementById('pr-tiempo') ? document.getElementById('pr-tiempo').value : state.presupuestoDraft.tiempoFabricacion,
+    observaciones: document.getElementById('pr-observaciones') ? document.getElementById('pr-observaciones').value : state.presupuestoDraft.observaciones,
+  };
+
   const plantillaId = document.getElementById('pr-plantilla').value;
   const plantilla = state.plantillas.find(pl => pl.id === plantillaId);
   state.presupuestoItemsEdit = plantilla ? JSON.parse(JSON.stringify(plantilla.items)) : [];
