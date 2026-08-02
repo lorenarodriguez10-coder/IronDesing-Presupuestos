@@ -77,11 +77,11 @@ function dibujarMedidas(doc, p, marginX, y){
   return y + 6;
 }
 
-function ensureSpace(doc, y, needed, marginX){
+function ensureSpace(doc, y, needed, marginX, p, etiqueta){
   const pageHeight = doc.internal.pageSize.getHeight();
   if(y + needed > pageHeight - 25){
     doc.addPage();
-    return dibujarEncabezado(doc, doc._presupuestoActualPDF, marginX, doc._etiquetaPDF);
+    return dibujarEncabezado(doc, p, marginX, etiqueta);
   }
   return y;
 }
@@ -101,7 +101,12 @@ function dibujarPie(doc, p, marginX){
   doc.text('Firma', pageWidth - marginX - 30, footerY + 11);
 }
 
-function generarPDF(){
+function nombreArchivoPDF(p, sufijo){
+  return `presupuesto-${p.numero ? formatearNumero(p.numero) : 'borrador'}-${sufijo}.pdf`;
+}
+
+// ============== PDF INTERNO (desglose completo, para el taller) ==============
+function generarPDFInterno(){
   const p = state.presupuestoActual;
   if(!p){ showToast('Primero calculá el presupuesto'); return; }
   if(!window.jspdf){ showToast('No se pudo cargar el generador de PDF'); return; }
@@ -111,12 +116,9 @@ function generarPDF(){
   const pageWidth = doc.internal.pageSize.getWidth();
   const marginX = 15;
   const t = calcularTotalesPDF(p);
+  const etiqueta = 'PÁGINA INTERNA — NO ENVIAR AL CLIENTE';
 
-  doc._presupuestoActualPDF = p;
-
-  // ============== PÁGINA 1: USO INTERNO (desglose completo) ==============
-  doc._etiquetaPDF = 'PÁGINA INTERNA — NO ENVIAR AL CLIENTE';
-  let y = dibujarEncabezado(doc, p, marginX, doc._etiquetaPDF);
+  let y = dibujarEncabezado(doc, p, marginX, etiqueta);
   y = dibujarDatosCliente(doc, p, marginX, y);
 
   doc.setFont('helvetica', 'bold');
@@ -147,7 +149,7 @@ function generarPDF(){
   });
 
   y = doc.lastAutoTable.finalY + 8;
-  y = ensureSpace(doc, y, 45, marginX);
+  y = ensureSpace(doc, y, 45, marginX, p, etiqueta);
 
   const totalesX = pageWidth - marginX;
   doc.setFontSize(9.5);
@@ -170,7 +172,7 @@ function generarPDF(){
   y += 4;
 
   if(p.tiempoFabricacion){
-    y = ensureSpace(doc, y, 10, marginX);
+    y = ensureSpace(doc, y, 10, marginX, p, etiqueta);
     doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5);
     doc.text('Tiempo estimado de fabricación:', marginX, y);
     doc.setFont('helvetica', 'normal');
@@ -179,7 +181,7 @@ function generarPDF(){
   }
   if(p.observaciones){
     const lineas = doc.splitTextToSize(p.observaciones, pageWidth - marginX*2);
-    y = ensureSpace(doc, y, 8 + lineas.length*5, marginX);
+    y = ensureSpace(doc, y, 8 + lineas.length*5, marginX, p, etiqueta);
     doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5);
     doc.text('Observaciones:', marginX, y);
     y += 5;
@@ -188,10 +190,22 @@ function generarPDF(){
   }
   dibujarPie(doc, p, marginX);
 
-  // ============== PÁGINA 2: PARA EL CLIENTE (sin desglose interno) ==============
-  doc.addPage();
-  doc._etiquetaPDF = null;
-  y = dibujarEncabezado(doc, p, marginX, null);
+  doc.save(nombreArchivoPDF(p, 'interno'));
+}
+
+// ============== PDF CLIENTE (solo el total, sin desglose) ==============
+function generarPDFCliente(){
+  const p = state.presupuestoActual;
+  if(!p){ showToast('Primero calculá el presupuesto'); return; }
+  if(!window.jspdf){ showToast('No se pudo cargar el generador de PDF'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const marginX = 15;
+  const t = calcularTotalesPDF(p);
+
+  let y = dibujarEncabezado(doc, p, marginX, null);
   y = dibujarDatosCliente(doc, p, marginX, y);
 
   doc.setFont('helvetica', 'bold');
@@ -225,7 +239,7 @@ function generarPDF(){
   y += 14;
 
   if(p.tiempoFabricacion){
-    y = ensureSpace(doc, y, 10, marginX);
+    y = ensureSpace(doc, y, 10, marginX, p, null);
     doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5);
     doc.text('Tiempo estimado de fabricación:', marginX, y);
     doc.setFont('helvetica', 'normal');
@@ -234,7 +248,7 @@ function generarPDF(){
   }
   if(p.observaciones){
     const lineas = doc.splitTextToSize(p.observaciones, pageWidth - marginX*2);
-    y = ensureSpace(doc, y, 8 + lineas.length*5, marginX);
+    y = ensureSpace(doc, y, 8 + lineas.length*5, marginX, p, null);
     doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5);
     doc.text('Observaciones:', marginX, y);
     y += 5;
@@ -243,6 +257,5 @@ function generarPDF(){
   }
   dibujarPie(doc, p, marginX);
 
-  const nombreArchivo = `presupuesto-${p.numero ? formatearNumero(p.numero) : 'borrador'}.pdf`;
-  doc.save(nombreArchivo);
+  doc.save(nombreArchivoPDF(p, 'cliente'));
 }
