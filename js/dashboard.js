@@ -71,11 +71,11 @@ function renderDashboard(){
       <div class="stat-grid">
         <div class="stat-card">
           <div class="stat-label">Facturación este mes</div>
-          <div class="stat-value">${money(facturacionMesActual)}</div>
+          <div class="stat-value">${moneyRedondo(facturacionMesActual)}</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Facturación histórica</div>
-          <div class="stat-value">${money(facturacionTotal)}</div>
+          <div class="stat-value">${moneyRedondo(facturacionTotal)}</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Tasa de conversión</div>
@@ -104,7 +104,7 @@ function renderDashboard(){
         </div>
         <div class="stat-card">
           <div class="stat-label">Monto — ${nombreMesClave(claveSeleccionada)}</div>
-          <div class="stat-value">${money(presupuestadoMesSel)}</div>
+          <div class="stat-value">${moneyRedondo(presupuestadoMesSel)}</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Total de trabajos (histórico)</div>
@@ -112,7 +112,7 @@ function renderDashboard(){
         </div>
         <div class="stat-card">
           <div class="stat-label">Monto presupuestado histórico</div>
-          <div class="stat-value">${money(presupuestadoTotal)}</div>
+          <div class="stat-value">${moneyRedondo(presupuestadoTotal)}</div>
         </div>
       </div>
     </div>
