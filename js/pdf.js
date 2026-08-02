@@ -127,8 +127,6 @@ function generarPDF(){
   y += 1;
 
   const filas = p.items.map(it => [
-
-  const filas = p.items.map(it => [
     it.nombre.replace('⚠ MATERIAL BORRADO — revisá esta plantilla', 'Material (revisar)'),
     `${it.cantidad} ${it.unidad}`,
     formatMoneyPdf(it.costoUnit),
