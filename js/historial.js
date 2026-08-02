@@ -42,6 +42,7 @@ function renderHistorial(){
     if(!p) { state.viewingHistorial = null; }
     else {
       const estadoActual = p.estado || 'pendiente';
+      const esVentaManual = !p.plantillaId && (!p.items || p.items.length <= 1);
       return `
         <div class="panel">
           <button class="ghost action" onclick="volverHistorial()">← Volver al historial</button>
@@ -56,6 +57,50 @@ function renderHistorial(){
             <button class="ghost small" onclick="cambiarEstado('${p.id}','cancelado')">Marcar Cancelado</button>
           </div>
         </div>
+        ${esVentaManual ? `
+        <div class="panel">
+          <h2>Editar datos de la venta</h2>
+          <div class="row">
+            <div class="field">
+              <label>Fecha</label>
+              <input id="ve-fecha" type="date" value="${p.fecha ? p.fecha.slice(0,10) : ''}">
+            </div>
+            <div class="field" style="flex:2 1 220px;">
+              <label>Nombre / descripción</label>
+              <input id="ve-nombre" value="${escapeHtml(p.nombre||'')}">
+            </div>
+            <div class="field">
+              <label>Origen</label>
+              <select id="ve-origen">
+                <option value="mercadolibre" ${p.origen==='mercadolibre'?'selected':''}>Mercado Libre</option>
+                <option value="presupuestador" ${p.origen==='presupuestador'?'selected':''}>Presupuestador</option>
+                <option value="otro" ${p.origen==='otro'?'selected':''}>Otro</option>
+              </select>
+            </div>
+          </div>
+          <div class="row" style="margin-top:12px;">
+            <div class="field">
+              <label>Cliente (opcional)</label>
+              <input id="ve-cliente" value="${escapeHtml((p.cliente&&p.cliente.nombre)||'')}">
+            </div>
+            <div class="field" style="flex:0 0 120px;">
+              <label>Cantidad</label>
+              <input id="ve-cantidad" type="number" step="1" min="1" value="${(p.items&&p.items[0]&&p.items[0].cantidad) || 1}">
+            </div>
+            <div class="field" style="flex:0 0 180px;">
+              <label>Precio por unidad</label>
+              <input id="ve-monto" type="number" step="0.01" value="${(p.items&&p.items[0]&&p.items[0].costoUnit) || p.total || 0}">
+            </div>
+          </div>
+          <div class="field" style="margin-top:12px;">
+            <label>Observaciones</label>
+            <textarea id="ve-observaciones">${escapeHtml(p.observaciones||'')}</textarea>
+          </div>
+          <div class="row" style="margin-top:14px;">
+            <button class="action" onclick="guardarEdicionVenta('${p.id}')">Guardar cambios</button>
+          </div>
+        </div>
+        ` : ''}
         ${renderTicket(state.presupuestoActual)}
       `;
     }
@@ -96,8 +141,12 @@ function renderHistorial(){
             <label>Cliente (opcional)</label>
             <input id="va-cliente" placeholder="Nombre del comprador">
           </div>
+          <div class="field" style="flex:0 0 120px;">
+            <label>Cantidad</label>
+            <input id="va-cantidad" type="number" step="1" min="1" value="1">
+          </div>
           <div class="field" style="flex:0 0 180px;">
-            <label>Monto total</label>
+            <label>Precio por unidad</label>
             <input id="va-monto" type="number" step="0.01" placeholder="0.00">
           </div>
         </div>
@@ -159,6 +208,45 @@ function renderHistorial(){
   `;
 }
 
+async function guardarEdicionVenta(id){
+  const idx = state.presupuestos.findIndex(x=>x.id===id);
+  if(idx === -1) return;
+  const fecha = document.getElementById('ve-fecha').value;
+  const nombre = document.getElementById('ve-nombre').value.trim();
+  const origen = document.getElementById('ve-origen').value;
+  const clienteNombre = document.getElementById('ve-cliente').value.trim();
+  const cantidad = parseFloat(document.getElementById('ve-cantidad').value) || 1;
+  const monto = parseFloat(document.getElementById('ve-monto').value);
+  const observaciones = document.getElementById('ve-observaciones').value.trim();
+
+  if(!fecha){ showToast('Elegí una fecha'); return; }
+  if(!nombre){ showToast('Cargá un nombre o descripción'); return; }
+  if(isNaN(monto) || monto <= 0){ showToast('Cargá un precio por unidad válido'); return; }
+
+  const registro = state.presupuestos[idx];
+  registro.fecha = fecha;
+  registro.nombre = nombre;
+  registro.origen = origen;
+  registro.cliente = { ...(registro.cliente||{}), nombre: clienteNombre };
+  registro.observaciones = observaciones;
+  registro.items = [{ materialId: null, nombre: 'Venta registrada', unidad: 'unidad', cantidad, costoUnit: monto }];
+  const subtotal = cantidad * monto;
+  registro.subtotalMateriales = subtotal;
+  registro.manoObra = subtotal * ((registro.manoObraPct||0)/100);
+  const subtotalConManoObra = subtotal + registro.manoObra;
+  registro.impuestos = subtotalConManoObra * ((registro.impuestosPct||0)/100);
+  const extrasNetos = (registro.extrasNetos||[]).reduce((s,e)=>s+e.monto,0);
+  registro.total = subtotalConManoObra + registro.impuestos + extrasNetos;
+
+  state.presupuestos[idx] = registro;
+  if(state.presupuestoActual && state.presupuestoActual.id === id){
+    state.presupuestoActual = JSON.parse(JSON.stringify(registro));
+  }
+  await storageSet(KEYS.presupuestos, state.presupuestos);
+  showToast('Venta actualizada');
+  render();
+}
+
 function toggleCargaVentaAntigua(){
   state.cargandoVentaAntigua = !state.cargandoVentaAntigua;
   render();
@@ -168,13 +256,15 @@ async function guardarVentaAntigua(){
   const nombre = document.getElementById('va-nombre').value.trim();
   const origen = document.getElementById('va-origen').value;
   const clienteNombre = document.getElementById('va-cliente').value.trim();
+  const cantidad = parseFloat(document.getElementById('va-cantidad').value) || 1;
   const monto = parseFloat(document.getElementById('va-monto').value);
   const observaciones = document.getElementById('va-observaciones').value.trim();
 
   if(!fecha){ showToast('Elegí una fecha'); return; }
   if(!nombre){ showToast('Cargá un nombre o descripción'); return; }
-  if(isNaN(monto) || monto <= 0){ showToast('Cargá un monto válido'); return; }
+  if(isNaN(monto) || monto <= 0){ showToast('Cargá un precio por unidad válido'); return; }
 
+  const total = monto * cantidad;
   const numero = await obtenerProximoNumero();
   const registro = {
     id: uid(),
@@ -184,14 +274,14 @@ async function guardarVentaAntigua(){
     fechaGuardado: new Date().toISOString(),
     cliente: { nombre: clienteNombre, telefono:'', direccion:'', email:'' },
     medidas: { largo:'', ancho:'', alto:'' },
-    items: [],
+    items: [{ materialId: null, nombre: 'Venta registrada', unidad: 'unidad', cantidad, costoUnit: monto }],
     extrasNetos: [],
     manoObraPct: 0,
     impuestosPct: 0,
-    subtotalMateriales: monto,
+    subtotalMateriales: total,
     manoObra: 0,
     impuestos: 0,
-    total: monto,
+    total,
     estado: 'aceptado', // una venta ya realizada se considera aceptada de entrada
     origen,
     tiempoFabricacion: '',
