@@ -6,6 +6,7 @@ const ESTADOS = {
 const ORIGENES = {
   presupuestador: 'Presupuestador',
   mercadolibre: 'Mercado Libre',
+  particular: 'Venta particular',
   otro: 'Otro',
 };
 
@@ -73,6 +74,7 @@ function renderHistorial(){
               <label>Origen</label>
               <select id="ve-origen">
                 <option value="mercadolibre" ${p.origen==='mercadolibre'?'selected':''}>Mercado Libre</option>
+                <option value="particular" ${p.origen==='particular'?'selected':''}>Venta particular</option>
                 <option value="presupuestador" ${p.origen==='presupuestador'?'selected':''}>Presupuestador</option>
                 <option value="otro" ${p.origen==='otro'?'selected':''}>Otro</option>
               </select>
@@ -90,6 +92,16 @@ function renderHistorial(){
             <div class="field" style="flex:0 0 180px;">
               <label>Precio por unidad</label>
               <input id="ve-monto" type="number" step="0.01" value="${(p.items&&p.items[0]&&p.items[0].costoUnit) || p.total || 0}">
+            </div>
+          </div>
+          <div class="row" style="margin-top:12px; align-items:center;">
+            <div class="field" style="flex:0 0 auto; flex-direction:row; align-items:center; gap:8px;">
+              <input id="ve-pagado" type="checkbox" ${p.pagado===false?'':'checked'} style="width:auto;">
+              <label style="text-transform:none; font-size:13px; color:var(--text);">Pagado en su totalidad</label>
+            </div>
+            <div class="field" style="flex:0 0 180px;">
+              <label>Monto adeudado (si no pagó todo)</label>
+              <input id="ve-adeudado" type="number" step="0.01" value="${p.montoAdeudado || 0}">
             </div>
           </div>
           <div class="field" style="margin-top:12px;">
@@ -131,6 +143,7 @@ function renderHistorial(){
             <label>Origen</label>
             <select id="va-origen">
               <option value="mercadolibre">Mercado Libre</option>
+              <option value="particular">Venta particular</option>
               <option value="presupuestador">Presupuestador</option>
               <option value="otro">Otro</option>
             </select>
@@ -148,6 +161,16 @@ function renderHistorial(){
           <div class="field" style="flex:0 0 180px;">
             <label>Precio por unidad</label>
             <input id="va-monto" type="number" step="0.01" placeholder="0.00">
+          </div>
+        </div>
+        <div class="row" style="margin-top:12px; align-items:center;">
+          <div class="field" style="flex:0 0 auto; flex-direction:row; align-items:center; gap:8px;">
+            <input id="va-pagado" type="checkbox" checked style="width:auto;">
+            <label style="text-transform:none; font-size:13px; color:var(--text);">Pagado en su totalidad</label>
+          </div>
+          <div class="field" style="flex:0 0 180px;">
+            <label>Monto adeudado (si no pagó todo)</label>
+            <input id="va-adeudado" type="number" step="0.01" value="0">
           </div>
         </div>
         <div class="field" style="margin-top:12px;">
@@ -192,10 +215,11 @@ function renderHistorial(){
         filtrados.map(p => {
         const estado = ESTADOS[p.estado || 'pendiente'];
         const origenLabel = p.origen && p.origen !== 'presupuestador' ? ORIGENES[p.origen] : null;
+        const tieneDeuda = p.pagado === false && (p.montoAdeudado||0) > 0;
         return `
         <div class="hist-item" onclick="verHistorial('${p.id}')">
           <div>
-            <div class="nombre">${escapeHtml(p.nombre)} ${p.numero ? `<span class="numero">Nº ${formatearNumero(p.numero)}</span>` : ''} <span class="estado-badge ${estado.clase}">${estado.label}</span> ${origenLabel ? `<span class="calc-badge">${origenLabel}</span>` : ''}</div>
+            <div class="nombre">${escapeHtml(p.nombre)} ${p.numero ? `<span class="numero">Nº ${formatearNumero(p.numero)}</span>` : ''} <span class="estado-badge ${estado.clase}">${estado.label}</span> ${origenLabel ? `<span class="calc-badge">${origenLabel}</span>` : ''} ${tieneDeuda ? `<span class="estado-badge estado-cancelado">Debe ${money(p.montoAdeudado)}</span>` : ''}</div>
             <div class="fecha">${p.cliente && p.cliente.nombre ? escapeHtml(p.cliente.nombre) + ' · ' : ''}${fechaLegible(p.fecha || p.fechaGuardado)}</div>
           </div>
           <div style="display:flex; align-items:center; gap:14px;">
@@ -217,6 +241,8 @@ async function guardarEdicionVenta(id){
   const clienteNombre = document.getElementById('ve-cliente').value.trim();
   const cantidad = parseFloat(document.getElementById('ve-cantidad').value) || 1;
   const monto = parseFloat(document.getElementById('ve-monto').value);
+  const pagado = document.getElementById('ve-pagado').checked;
+  const montoAdeudado = pagado ? 0 : (parseFloat(document.getElementById('ve-adeudado').value) || 0);
   const observaciones = document.getElementById('ve-observaciones').value.trim();
 
   if(!fecha){ showToast('Elegí una fecha'); return; }
@@ -227,6 +253,8 @@ async function guardarEdicionVenta(id){
   registro.fecha = fecha;
   registro.nombre = nombre;
   registro.origen = origen;
+  registro.pagado = pagado;
+  registro.montoAdeudado = montoAdeudado;
   registro.cliente = { ...(registro.cliente||{}), nombre: clienteNombre };
   registro.observaciones = observaciones;
   registro.items = [{ materialId: null, nombre: 'Venta registrada', unidad: 'unidad', cantidad, costoUnit: monto }];
@@ -258,6 +286,8 @@ async function guardarVentaAntigua(){
   const clienteNombre = document.getElementById('va-cliente').value.trim();
   const cantidad = parseFloat(document.getElementById('va-cantidad').value) || 1;
   const monto = parseFloat(document.getElementById('va-monto').value);
+  const pagado = document.getElementById('va-pagado').checked;
+  const montoAdeudado = pagado ? 0 : (parseFloat(document.getElementById('va-adeudado').value) || 0);
   const observaciones = document.getElementById('va-observaciones').value.trim();
 
   if(!fecha){ showToast('Elegí una fecha'); return; }
@@ -284,6 +314,8 @@ async function guardarVentaAntigua(){
     total,
     estado: 'aceptado', // una venta ya realizada se considera aceptada de entrada
     origen,
+    pagado,
+    montoAdeudado,
     tiempoFabricacion: '',
     observaciones,
   };
