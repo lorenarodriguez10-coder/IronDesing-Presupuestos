@@ -10,7 +10,7 @@ const CALCULOS = [
 ];
 
 let state = {
-  tab: 'materiales',
+  tab: 'dashboard',
   materiales: [],
   plantillas: [],
   presupuestos: [],
