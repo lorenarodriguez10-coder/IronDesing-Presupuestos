@@ -2,13 +2,14 @@ function render(){
   const tabsEl = document.getElementById('tabs');
   const mainEl = document.getElementById('main');
   const tabs = [
-    ['materiales','Materiales'], ['plantillas','Plantillas'], ['presupuesto','Presupuesto'], ['historial','Historial']
+    ['dashboard','Dashboard'], ['materiales','Materiales'], ['plantillas','Plantillas'], ['presupuesto','Presupuesto'], ['historial','Historial']
   ];
   tabsEl.innerHTML = tabs.map(([id,label]) => `<button class="${state.tab===id?'active':''}" onclick="setTab('${id}')">${label}</button>`).join('');
 
   if(!state.loaded){ mainEl.innerHTML = '<div class="panel"><div class="empty">Cargando datos...</div></div>'; return; }
 
-  if(state.tab==='materiales') mainEl.innerHTML = renderMateriales();
+  if(state.tab==='dashboard') mainEl.innerHTML = renderDashboard();
+  else if(state.tab==='materiales') mainEl.innerHTML = renderMateriales();
   else if(state.tab==='plantillas') mainEl.innerHTML = renderPlantillas();
   else if(state.tab==='presupuesto') mainEl.innerHTML = renderPresupuesto();
   else if(state.tab==='historial') mainEl.innerHTML = renderHistorial();
