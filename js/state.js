@@ -20,6 +20,7 @@ let state = {
   editingPlantillaId: null,
   presupuestoActual: null,
   presupuestoItemsEdit: [], // copia editable (solo para este presupuesto) de los factores de la plantilla elegida
+  presupuestoDraft: { nombre:'', cliente:{nombre:'',telefono:'',direccion:'',email:''}, tiempoFabricacion:'', observaciones:'' },
   viewingHistorial: null,
 };
 
