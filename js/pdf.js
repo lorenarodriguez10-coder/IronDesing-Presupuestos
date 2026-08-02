@@ -66,6 +66,17 @@ function dibujarDatosCliente(doc, p, marginX, y){
   return y + 4;
 }
 
+function dibujarMedidas(doc, p, marginX, y){
+  const m = p.medidas || {};
+  if(!(m.largo || m.ancho || m.alto)) return y;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(110,110,110);
+  doc.text(`Medidas: ${m.largo||0}m × ${m.ancho||0}m × ${m.alto||0}m`, marginX, y);
+  doc.setTextColor(0,0,0);
+  return y + 6;
+}
+
 function ensureSpace(doc, y, needed, marginX){
   const pageHeight = doc.internal.pageSize.getHeight();
   if(y + needed > pageHeight - 25){
