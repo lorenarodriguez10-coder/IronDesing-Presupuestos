@@ -292,10 +292,11 @@ function renderTicket(p){
         <div class="total-line grand"><span>TOTAL</span><span class="amt">${money(total)}</span></div>
       </div>
 
-      <div class="row" style="margin-top:18px;">
+      <div class="row" style="margin-top:18px; align-items:center;">
         <button class="action" onclick="guardarPresupuesto(${subtotalMateriales}, ${manoObra}, ${impuestos}, ${total})">${p.numero ? 'Guardar cambios' : 'Guardar presupuesto'}</button>
         <button class="ghost action" onclick="generarPDFInterno()">PDF interno</button>
         <button class="ghost action" onclick="generarPDFCliente()">PDF cliente</button>
+        <span class="hint" style="display:inline;">💡 Tip: apretá Enter para guardar más rápido</span>
       </div>
     </div>
   `;
