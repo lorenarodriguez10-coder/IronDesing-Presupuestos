@@ -28,4 +28,19 @@ function iniciarApp(){
   }
 }
 
+// Atajo de teclado: Enter guarda el presupuesto, una vez que ya está calculado (el ticket visible).
+// No actúa dentro de textareas (ahí Enter tiene que seguir agregando renglones normalmente).
+document.addEventListener('keydown', (e) => {
+  if(e.key !== 'Enter') return;
+  if(e.target && e.target.tagName === 'TEXTAREA') return;
+  if(state.tab === 'presupuesto' && state.presupuestoActual && typeof guardarPresupuesto === 'function'){
+    const dentroDelForm = e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT');
+    if(dentroDelForm){
+      e.preventDefault();
+      const t = calcularTotalesPDF ? calcularTotalesPDF(state.presupuestoActual) : null;
+      if(t) guardarPresupuesto(t.subtotalMateriales, t.manoObra, t.impuestos, t.total);
+    }
+  }
+});
+
 iniciarApp();
