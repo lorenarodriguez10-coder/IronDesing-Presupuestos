@@ -1,6 +1,8 @@
 function renderInventario(){
   const inv = state.inventario || { stockPiezas:{}, stockContinuo:{}, retazos:[] };
-  const materialesOrdenados = [...state.materiales].sort((a,b)=> a.nombre.localeCompare(b.nombre));
+  const materialesOrdenados = [...state.materiales]
+    .filter(m => m.nombre.toLowerCase().includes((state.inventarioBusqueda||'').toLowerCase()))
+    .sort((a,b)=> a.nombre.localeCompare(b.nombre));
 
   return `
     <div class="panel">
@@ -9,8 +11,7 @@ function renderInventario(){
         <button class="ghost action" onclick="toggleCargaInventarioMasiva()">${state.cargaInventarioMasiva ? 'Cancelar' : '+ Carga rápida'}</button>
       </div>
       ${state.cargaInventarioMasiva ? `
-        <div class="hint" style="margin-top:10px;">Pegá una lista, una por línea, con el nombre EXACTO del material (como está cargado en Materiales) y la cantidad de piezas/unidades que compraste. Ejemplo:</div>
-        <div class="hint mono" style="margin-top:4px; background:var(--bg); padding:8px; border-radius:var(--radius);">Hierro 50-20, 5<br>Tabla de Eucalipo, 2</div>
+        <div class="hint" style="margin-top:10px;">Pegá una lista, una por línea, con el nombre EXACTO del material (como está cargado en Materiales) y la cantidad de piezas/unidades que compraste.</div>
         <div class="field" style="margin-top:12px;">
           <textarea id="inv-masivo" placeholder="Hierro 50-20, 5&#10;Tabla de Eucalipo, 2" style="min-height:120px;"></textarea>
         </div>
@@ -22,7 +23,11 @@ function renderInventario(){
 
     <div class="panel">
       <h2>Stock por material</h2>
-      ${materialesOrdenados.length === 0 ? '<div class="empty">Todavía no cargaste materiales.</div>' : `
+      <div class="field" style="margin-bottom:16px;">
+        <input id="inv-buscar" value="${escapeHtml(state.inventarioBusqueda||'')}" placeholder="Buscar material por nombre..." oninput="updateInventarioBusqueda(this.value)">
+      </div>
+      ${state.materiales.length === 0 ? '<div class="empty">Todavía no cargaste materiales.</div>' :
+        materialesOrdenados.length === 0 ? '<div class="empty">Ningún material coincide con la búsqueda.</div>' : `
       <div class="tag-grid">
         ${materialesOrdenados.map(m => {
           const retazosDelMaterial = inv.retazos.filter(r=>r.materialId===m.id);
@@ -63,6 +68,18 @@ function renderInventario(){
       `}
     </div>
   `;
+}
+
+function updateInventarioBusqueda(value){
+  state.inventarioBusqueda = value;
+  const input = document.getElementById('inv-buscar');
+  const cursorPos = input ? input.selectionStart : null;
+  render();
+  const nuevoInput = document.getElementById('inv-buscar');
+  if(nuevoInput){
+    nuevoInput.focus();
+    if(cursorPos !== null) nuevoInput.setSelectionRange(cursorPos, cursorPos);
+  }
 }
 
 function toggleCargaInventarioMasiva(){
