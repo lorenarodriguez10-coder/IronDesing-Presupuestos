@@ -15,6 +15,7 @@ let state = {
   cargandoVentaAntigua: false,
   inventario: { stockPiezas: {}, stockContinuo: {}, retazos: [] },
   cargaInventarioMasiva: false,
+  inventarioBusqueda: '',
   materiales: [],
   plantillas: [],
   presupuestos: [],
