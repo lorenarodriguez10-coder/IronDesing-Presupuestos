@@ -7,7 +7,7 @@ function renderPlantillas(){
       <div class="row">
         <div class="field">
           <label>Nombre de la plantilla</label>
-          <input id="p-nombre" placeholder="Ej: Consola recibidor 1.20m" value="${escapeHtml(b.nombre)}">
+          <input id="p-nombre" placeholder="Ej: Recibidor doble 1.20m" value="${escapeHtml(b.nombre)}">
         </div>
         <div class="field">
           <label>Tipo</label>
