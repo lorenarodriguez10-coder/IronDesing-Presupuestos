@@ -33,7 +33,7 @@ function renderMateriales(){
         </div>
         ${editing ? `<div class="field" style="flex:0 0 auto;"><button class="ghost action" onclick="cancelEditMaterial()">Cancelar</button></div>` : ''}
       </div>
-      <div class="hint">Cargá estas medidas solo si el material se compra en piezas de tamaño fijo (una tabla, un caño, una plancha). Así el sistema calcula cuántas piezas enteras hacen falta según las medidas del mueble, en vez de solo el área o largo total.<br><strong>⚠️ Si cargás estas medidas, el "Costo por unidad" de arriba tiene que ser el precio de LA PIEZA ENTERA</strong> (la barra completa, la plancha completa) — no el precio de un metro ni de un m² sueltos. El sistema hace esa división solo.</div>
+      <div class="hint">Cargá estas medidas solo si el material se compra en piezas de tamaño fijo (una tabla, un caño, una plancha). Así el sistema calcula cuántas piezas enteras hacen falta según las medidas del mueble, en vez de solo el área o largo total.</div>
     </div>
     <div class="panel">
       <h2>Materiales cargados (${state.materiales.length})</h2>
