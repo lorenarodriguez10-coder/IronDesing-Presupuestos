@@ -1,0 +1,21 @@
+{
+  "name": "Iron Design — Presupuestador",
+  "short_name": "Iron Design",
+  "description": "Materiales, plantillas y presupuestos de Iron Design",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0d1b2a",
+  "theme_color": "#0d1b2a",
+  "icons": [
+    {
+      "src": "assets/logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "assets/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
