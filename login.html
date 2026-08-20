@@ -62,6 +62,25 @@
   }
   button:hover { background: #555; }
   button:disabled { opacity: 0.6; cursor: not-allowed; }
+  .password-wrap {
+    position: relative;
+  }
+  .password-wrap input {
+    padding-right: 44px;
+  }
+  #toggle-pass {
+    position: absolute;
+    right: 10px;
+    top: 8px;
+    width: auto;
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 12px;
+    padding: 4px 6px;
+    cursor: pointer;
+  }
+  #toggle-pass:hover { background: none; color: #fff; }
   #error-msg {
     color: #ff6b6b;
     font-size: 13px;
@@ -80,7 +99,10 @@
     <input type="email" id="email" required autocomplete="username">
 
     <label for="password">Contraseña</label>
-    <input type="password" id="password" required autocomplete="current-password">
+    <div class="password-wrap">
+      <input type="password" id="password" required autocomplete="current-password">
+      <button type="button" id="toggle-pass">Ver</button>
+    </div>
 
     <button type="submit" id="login-btn">Ingresar</button>
     <div id="error-msg"></div>
@@ -99,6 +121,14 @@
   const form = document.getElementById("login-form");
   const errorMsg = document.getElementById("error-msg");
   const loginBtn = document.getElementById("login-btn");
+  const passInput = document.getElementById("password");
+  const togglePass = document.getElementById("toggle-pass");
+
+  togglePass.addEventListener("click", () => {
+    const isHidden = passInput.type === "password";
+    passInput.type = isHidden ? "text" : "password";
+    togglePass.textContent = isHidden ? "Ocultar" : "Ver";
+  });
 
   // Si ya está logueado, lo mandamos directo adentro
   firebase.auth().onAuthStateChanged((user) => {
@@ -133,6 +163,5 @@
       });
   });
 </script>
-
 </body>
 </html>
