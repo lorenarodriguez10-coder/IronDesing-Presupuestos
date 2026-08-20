@@ -47,5 +47,12 @@
 <script src="js/pdf.js"></script>
 <script src="js/historial.js"></script>
 <script src="js/app.js"></script>
+<script>
+  document.getElementById("logout-btn").addEventListener("click", () => {
+    firebase.auth().signOut().then(() => {
+      window.location.href = "login.html";
+    });
+  });
+</script>
 </body>
 </html>
